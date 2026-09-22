@@ -7,6 +7,15 @@ import {
   storeUser,
   type StoredUser,
 } from "@/lib/auth";
+import {
+  ADMIN_ID,
+  ADMIN_NAME,
+  ADMIN_PASSWORD,
+  createAccount,
+  findAccount,
+  norm,
+} from "@/lib/store";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
