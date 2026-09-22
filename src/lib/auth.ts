@@ -3,6 +3,7 @@ export type StoredUser = {
   method: "email" | "phone";
   name: string;
   createdAt: string;
+  isAdmin?: boolean;
 };
 
 const KEY = "wafr_user";
