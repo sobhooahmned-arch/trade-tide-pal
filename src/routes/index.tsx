@@ -11,13 +11,13 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ET CASH | منصة استثمار وتداول" },
+      { title: "Easy Money | منصة استثمار وتداول" },
       {
         name: "description",
         content:
-          "سجّل دخولك بالبريد الإلكتروني أو رقم الموبايل وابدأ متابعة أسهمك وأرباحك لحظة بلحظة على منصة ET CASH.",
+          "سجّل دخولك بالبريد الإلكتروني أو رقم الموبايل وابدأ متابعة أسهمك وأرباحك لحظة بلحظة على منصة Easy Money.",
       },
-      { property: "og:title", content: "ET CASH | منصة استثمار وتداول" },
+      { property: "og:title", content: "Easy Money | منصة استثمار وتداول" },
       {
         property: "og:description",
         content: "دخول سريع، محفظة واضحة، وأسعار أسهم تتحرك لحظة بلحظة.",
@@ -81,7 +81,7 @@ function LoadingPanel({ progress }: { progress: number }) {
   return (
     <div className="py-6 text-center">
       <Logo />
-      <h1 className="mt-5 text-2xl font-bold">ET CASH</h1>
+      <h1 className="mt-5 text-2xl font-bold">Easy Money</h1>
       <p className="mt-2 text-sm text-muted-foreground">جارٍ تحضير منصة الاستثمار…</p>
       <div className="mt-6 h-2 w-full overflow-hidden rounded-full bg-secondary">
         <div
@@ -98,7 +98,7 @@ function WelcomePanel({ onStart }: { onStart: () => void }) {
   return (
     <div className="text-center">
       <Logo />
-      <h1 className="mt-5 text-2xl font-bold">أهلاً بك في ET CASH 👋</h1>
+      <h1 className="mt-5 text-2xl font-bold">أهلاً بك في Easy Money 👋</h1>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
         منصة استثمار بسيطة وواضحة: تابع حركة الأسهم وأرباح المستثمرين لحظة بلحظة، وادِر
         عمليات الإيداع والسحب من مكان واحد.
