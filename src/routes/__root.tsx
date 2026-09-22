@@ -77,9 +77,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "وفر كابيتال" },
+      { title: "ET CASH" },
       { name: "description", content: "منصة استثمار وتداول بواجهة عربية بسيطة." },
-      { property: "og:title", content: "وفر كابيتال" },
+      { property: "og:title", content: "ET CASH" },
       { property: "og:description", content: "منصة استثمار وتداول بواجهة عربية بسيطة." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
