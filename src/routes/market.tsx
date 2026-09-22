@@ -234,7 +234,7 @@ function MoneyModal({
   onConfirm,
 }: {
   kind: "deposit" | "withdraw";
-  max?: number;
+  max?: number | undefined;
   onClose: () => void;
   onConfirm: (amount: number) => void;
 }) {
