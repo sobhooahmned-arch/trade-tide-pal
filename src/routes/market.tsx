@@ -7,13 +7,13 @@ export const Route = createFileRoute("/market")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "السوق والمحفظة | وفر كابيتال" },
+      { title: "السوق والمحفظة | ET CASH" },
       {
         name: "description",
         content:
           "تابع حركة الأسهم وأرباح المستثمرين لحظة بلحظة، وأدِر الإيداع والسحب من أعلى الصفحة.",
       },
-      { property: "og:title", content: "السوق والمحفظة | وفر كابيتال" },
+      { property: "og:title", content: "السوق والمحفظة | ET CASH" },
       {
         property: "og:description",
         content: "أسعار متحركة، أرباح محفظتك، وإيداع وسحب في خطوة واحدة.",
@@ -70,10 +70,10 @@ function MarketPage() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-black text-primary-foreground">
-                و
+                $
               </span>
               <div>
-                <p className="text-sm font-bold leading-tight">وفر كابيتال</p>
+                <p className="text-sm font-bold leading-tight">ET CASH</p>
                 <p className="text-xs text-muted-foreground">أهلاً {user.name}</p>
               </div>
             </div>
