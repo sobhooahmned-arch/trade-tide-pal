@@ -7,6 +7,15 @@ import {
   storeUser,
   type StoredUser,
 } from "@/lib/auth";
+import {
+  ADMIN_ID,
+  ADMIN_NAME,
+  ADMIN_PASSWORD,
+  createAccount,
+  findAccount,
+  norm,
+} from "@/lib/store";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,9 +44,10 @@ function Landing() {
   useEffect(() => {
     const existing = getStoredUser();
     if (existing) {
-      navigate({ to: "/market", replace: true });
+      navigate({ to: existing.isAdmin ? "/admin" : "/market", replace: true });
       return;
     }
+
     const int = window.setInterval(() => {
       setProgress((p) => (p >= 100 ? 100 : p + Math.random() * 14));
     }, 160);
@@ -60,10 +70,11 @@ function Landing() {
           <LoginPanel
             onDone={(user) => {
               storeUser(user);
-              navigate({ to: "/market", replace: true });
+              navigate({ to: user.isAdmin ? "/admin" : "/market", replace: true });
             }}
           />
         )}
+
       </div>
     </main>
   );
@@ -135,24 +146,51 @@ function LoginPanel({ onDone }: { onDone: (user: StoredUser) => void }) {
     e.preventDefault();
     const v = value.trim();
     if (name.trim().length < 2) return setError("اكتب اسمك من فضلك.");
+
+    // دخول الأدمن
+    if (norm(v) === ADMIN_ID && password === ADMIN_PASSWORD && norm(name) === ADMIN_NAME) {
+      setError(null);
+      setBusy(true);
+      window.setTimeout(
+        () =>
+          onDone({
+            identifier: ADMIN_ID,
+            method: "email",
+            name: "الإدارة",
+            createdAt: new Date().toISOString(),
+            isAdmin: true,
+          }),
+        500,
+      );
+      return;
+    }
+
     if (method === "email" && !emailPattern.test(v))
       return setError("البريد الإلكتروني غير صحيح.");
     if (method === "phone" && !phonePattern.test(v.replace(/\s/g, "")))
       return setError("رقم الموبايل غير صحيح.");
     if (password.length < 4) return setError("كلمة المرور 4 أحرف على الأقل.");
+
+    const existing = findAccount(v);
+    if (existing && existing.password !== password)
+      return setError("كلمة المرور غير صحيحة لهذا الحساب.");
+    const account =
+      existing ?? createAccount({ identifier: v, method, name: name.trim(), password });
+
     setError(null);
     setBusy(true);
     window.setTimeout(
       () =>
         onDone({
-          identifier: v,
-          method,
-          name: name.trim(),
-          createdAt: new Date().toISOString(),
+          identifier: account.identifier,
+          method: account.method,
+          name: account.name,
+          createdAt: account.createdAt,
         }),
       700,
     );
   }
+
 
   return (
     <form onSubmit={submit} className="text-right">
