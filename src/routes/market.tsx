@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { clearStoredUser, getStoredUser, type StoredUser } from "@/lib/auth";
 import { createStocks, fmt, tick, toPath, type Stock } from "@/lib/market";
+import { addRequest, getBalance, userRequests, type MoneyRequest } from "@/lib/store";
 
 export const Route = createFileRoute("/market")({
   ssr: false,
@@ -23,15 +24,14 @@ export const Route = createFileRoute("/market")({
   component: MarketPage,
 });
 
-type Tx = { id: number; kind: "deposit" | "withdraw"; amount: number; at: string };
-
 function MarketPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState<StoredUser | null>(null);
   const [stocks, setStocks] = useState<Stock[]>(() => createStocks());
-  const [balance, setBalance] = useState(25000);
-  const [txs, setTxs] = useState<Tx[]>([]);
+  const [balance, setBalance] = useState(0);
+  const [reqs, setReqs] = useState<MoneyRequest[]>([]);
   const [modal, setModal] = useState<"deposit" | "withdraw" | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     const u = getStoredUser();
@@ -39,7 +39,13 @@ function MarketPage() {
       navigate({ to: "/", replace: true });
       return;
     }
+    if (u.isAdmin) {
+      navigate({ to: "/admin", replace: true });
+      return;
+    }
     setUser(u);
+    setBalance(getBalance(u.identifier));
+    setReqs(userRequests(u.identifier));
   }, [navigate]);
 
   useEffect(() => {
@@ -47,20 +53,34 @@ function MarketPage() {
     return () => window.clearInterval(id);
   }, []);
 
+  // تحديث الرصيد لو الإدارة أضافت مبلغاً
+  useEffect(() => {
+    if (!user) return;
+    const id = window.setInterval(() => {
+      setBalance(getBalance(user.identifier));
+      setReqs(userRequests(user.identifier));
+    }, 2000);
+    return () => window.clearInterval(id);
+  }, [user]);
+
   const profit = useMemo(
-    () => stocks.reduce((acc, s) => acc + (s.change / 100) * 4000, 0),
-    [stocks],
+    () =>
+      balance <= 0 ? 0 : stocks.reduce((acc, s) => acc + (s.change / 100) * (balance / 6), 0),
+    [stocks, balance],
   );
 
   if (!user) return null;
 
   function apply(kind: "deposit" | "withdraw", amount: number) {
-    setBalance((b) => (kind === "deposit" ? b + amount : Math.max(0, b - amount)));
-    setTxs((t) => [
-      { id: Date.now(), kind, amount, at: new Date().toLocaleTimeString("ar-EG") },
-      ...t.slice(0, 5),
-    ]);
+    addRequest({ identifier: user!.identifier, name: user!.name, kind, amount });
+    setReqs(userRequests(user!.identifier));
     setModal(null);
+    setNotice(
+      kind === "deposit"
+        ? "تم إرسال طلب الإيداع، سيتم إضافة المبلغ لرصيدك بعد مراجعة الإدارة."
+        : "تم إرسال طلب السحب، سيتم تنفيذه بعد مراجعة الإدارة.",
+    );
+    window.setTimeout(() => setNotice(null), 5000);
   }
 
   return (
@@ -108,6 +128,12 @@ function MarketPage() {
       </header>
 
       <div className="mx-auto max-w-5xl px-4 pt-5">
+        {notice && (
+          <p className="mb-4 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm text-primary">
+            {notice}
+          </p>
+        )}
+
         <section className="grid gap-3 sm:grid-cols-3">
           <Stat label="رصيد المحفظة" value={`${fmt(balance)} ج.م`} />
           <Stat
@@ -129,11 +155,11 @@ function MarketPage() {
           ))}
         </section>
 
-        {txs.length > 0 && (
+        {reqs.length > 0 && (
           <>
-            <h2 className="mt-8 text-lg font-bold">آخر العمليات</h2>
+            <h2 className="mt-8 text-lg font-bold">طلباتي</h2>
             <ul className="mt-3 space-y-2">
-              {txs.map((t) => (
+              {reqs.map((t) => (
                 <li
                   key={t.id}
                   className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-sm"
@@ -141,7 +167,13 @@ function MarketPage() {
                   <span className={t.kind === "deposit" ? "text-primary" : "text-accent"}>
                     {t.kind === "deposit" ? "إيداع" : "سحب"} {fmt(t.amount)} ج.م
                   </span>
-                  <span className="text-xs text-muted-foreground">{t.at}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {t.status === "pending"
+                      ? "قيد المراجعة"
+                      : t.status === "approved"
+                        ? "تم التنفيذ"
+                        : "مرفوض"}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -248,7 +280,7 @@ function MoneyModal({
         <h3 className="text-lg font-bold">{kind === "deposit" ? "إيداع رصيد" : "سحب رصيد"}</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           {kind === "deposit"
-            ? "اكتب المبلغ الذي تريد إضافته إلى محفظتك."
+            ? "اكتب المبلغ الذي أودعته، وسيتم إضافته لرصيدك بعد مراجعة الإدارة."
             : `المتاح للسحب: ${fmt(max ?? 0)} ج.م`}
         </p>
         <input
