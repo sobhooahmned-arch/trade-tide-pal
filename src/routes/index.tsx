@@ -135,17 +135,37 @@ function WelcomePanel({ onStart }: { onStart: () => void }) {
 }
 
 function LoginPanel({ onDone }: { onDone: (user: StoredUser) => void }) {
+  const [mode, setMode] = useState<"signup" | "login">("signup");
   const [method, setMethod] = useState<"email" | "phone">("email");
   const [value, setValue] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  function login(v: string) {
+    const account = findAccount(v);
+    if (!account) return setError("لا يوجد حساب بهذا البيان. أنشئ حسابًا أولاً.");
+    if (account.password !== password)
+      return setError("كلمة المرور غير صحيحة لهذا الحساب.");
+    setError(null);
+    setBusy(true);
+    window.setTimeout(
+      () =>
+        onDone({
+          identifier: account.identifier,
+          method: account.method,
+          name: account.name,
+          createdAt: account.createdAt,
+        }),
+      700,
+    );
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const v = value.trim();
-    if (name.trim().length < 2) return setError("اكتب اسمك من فضلك.");
 
     // دخول الأدمن
     if (norm(v) === ADMIN_ID && password === ADMIN_PASSWORD && norm(name) === ADMIN_NAME) {
@@ -165,39 +185,66 @@ function LoginPanel({ onDone }: { onDone: (user: StoredUser) => void }) {
       return;
     }
 
+    if (mode === "signup" && name.trim().length < 2)
+      return setError("اكتب اسمك من فضلك.");
     if (method === "email" && !emailPattern.test(v))
       return setError("البريد الإلكتروني غير صحيح.");
     if (method === "phone" && !phonePattern.test(v.replace(/\s/g, "")))
       return setError("رقم الموبايل غير صحيح.");
     if (password.length < 4) return setError("كلمة المرور 4 أحرف على الأقل.");
 
-    const existing = findAccount(v);
-    if (existing && existing.password !== password)
-      return setError("كلمة المرور غير صحيحة لهذا الحساب.");
-    const account =
-      existing ?? createAccount({ identifier: v, method, name: name.trim(), password });
+    if (mode === "signup") {
+      if (findAccount(v))
+        return setError("يوجد حساب بهذا البيان بالفعل. سجّل دخولك بدلًا من ذلك.");
+      createAccount({ identifier: v, method, name: name.trim(), password });
+      setError(null);
+      setInfo("تم إنشاء حسابك بنجاح. سجّل دخولك الآن.");
+      setMode("login");
+      setPassword("");
+      return;
+    }
 
-    setError(null);
-    setBusy(true);
-    window.setTimeout(
-      () =>
-        onDone({
-          identifier: account.identifier,
-          method: account.method,
-          name: account.name,
-          createdAt: account.createdAt,
-        }),
-      700,
-    );
+    setInfo(null);
+    login(v);
   }
 
 
   return (
     <form onSubmit={submit} className="text-right">
-      <h1 className="text-xl font-bold">تسجيل الدخول</h1>
+      <h1 className="text-xl font-bold">
+        {mode === "signup" ? "إنشاء حساب" : "تسجيل الدخول"}
+      </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        سيتم حفظ دخولك على هذا الجهاز، فلن نطلبه مرة أخرى.
+        {mode === "signup"
+          ? "أنشئ حسابك الجديد، وبعدها سجّل دخولك من خانة تسجيل الدخول."
+          : "سيتم حفظ دخولك على هذا الجهاز، فلن نطلبه مرة أخرى."}
       </p>
+
+      <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-secondary p-1">
+        {(
+          [
+            ["signup", "إنشاء حساب"],
+            ["login", "تسجيل دخول"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => {
+              setMode(key);
+              setError(null);
+              setInfo(null);
+            }}
+            className={`rounded-lg py-2 text-sm font-semibold transition ${
+              mode === key
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-secondary p-1">
         {(
