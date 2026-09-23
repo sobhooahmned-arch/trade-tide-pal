@@ -149,6 +149,18 @@ function AdminPage() {
                     </button>
                   </div>
                 </div>
+                {r.proof && (
+                  <details className="mt-3">
+                    <summary className="cursor-pointer text-xs font-bold text-primary">
+                      عرض إثبات التحويل
+                    </summary>
+                    <img
+                      src={r.proof}
+                      alt="إثبات التحويل"
+                      className="mt-2 max-h-72 w-full rounded-xl object-contain"
+                    />
+                  </details>
+                )}
               </li>
             ))}
           </ul>

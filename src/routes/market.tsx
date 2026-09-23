@@ -282,34 +282,41 @@ function MoneyModal({
     <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/60 p-4 sm:items-center">
       <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-6 text-right">
         <h3 className="text-lg font-bold">{kind === "deposit" ? "إيداع رصيد" : "سحب رصيد"}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {kind === "deposit"
-            ? "اكتب المبلغ الذي أودعته، وسيتم إضافته لرصيدك بعد مراجعة الإدارة."
-            : `المتاح للسحب: ${fmt(max ?? 0)} ج.م`}
-        </p>
-        <input
-          value={raw}
-          onChange={(e) => setRaw(e.target.value.replace(/[^\d.]/g, ""))}
-          inputMode="decimal"
-          dir="ltr"
-          placeholder="0.00"
-          className="mt-4 w-full rounded-xl border border-input bg-background/60 px-3 py-3 text-lg outline-none focus:border-primary"
-        />
-        <div className="mt-3 flex gap-2">
-          {[500, 1000, 5000].map((v) => (
-            <button
-              key={v}
-              onClick={() => setRaw(String(v))}
-              className="flex-1 rounded-lg bg-secondary py-2 text-sm"
-            >
-              {v}
-            </button>
-          ))}
-        </div>
+        {kind === "deposit" ? (
+          <p className="mt-1 text-sm text-muted-foreground">
+            هنتنقل لصفحة فيها أرقام أورنج كاش للتحويل، هتضيف فيها إثبات التحويل وتكتب المبلغ.
+          </p>
+        ) : (
+          <>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {`المتاح للسحب: ${fmt(max ?? 0)} ج.م`}
+            </p>
+            <input
+              value={raw}
+              onChange={(e) => setRaw(e.target.value.replace(/[^\d.]/g, ""))}
+              inputMode="decimal"
+              dir="ltr"
+              placeholder="0.00"
+              className="mt-4 w-full rounded-xl border border-input bg-background/60 px-3 py-3 text-lg outline-none focus:border-primary"
+            />
+            <div className="mt-3 flex gap-2">
+              {[500, 1000, 5000].map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setRaw(String(v))}
+                  className="flex-1 rounded-lg bg-secondary py-2 text-sm"
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
         <div className="mt-5 flex gap-2">
           <button
             onClick={() => {
+              if (kind === "deposit") return onConfirm(0);
               if (!amount || amount <= 0) return setError("اكتب مبلغاً صحيحاً.");
               if (max !== undefined && amount > max) return setError("المبلغ أكبر من رصيدك.");
               onConfirm(amount);
