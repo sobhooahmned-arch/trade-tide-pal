@@ -107,7 +107,7 @@ export function addRequest(input: {
   };
   if (input.proof !== undefined) {
     req.proof = input.proof;
-    req.proofName = input.proofName;
+    if (input.proofName !== undefined) req.proofName = input.proofName;
   }
   write(REQUESTS_KEY, [req, ...getRequests()]);
   return req;
