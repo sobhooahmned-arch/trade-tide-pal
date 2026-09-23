@@ -19,6 +19,7 @@ export type MoneyRequest = {
   amount: number;
   status: "pending" | "approved" | "rejected";
   at: string;
+  decidedAt?: string;
   proof?: string;
   proofName?: string;
 };
@@ -116,8 +117,30 @@ export function addRequest(input: {
 export function setRequestStatus(id: string, status: "approved" | "rejected") {
   write(
     REQUESTS_KEY,
-    getRequests().map((r) => (r.id === id ? { ...r, status } : r)),
+    getRequests().map((r) =>
+      r.id === id ? { ...r, status, decidedAt: new Date().toISOString() } : r,
+    ),
   );
+}
+
+export const DEPOSIT_BAN_MS = 15 * 60 * 1000;
+
+/** طلب إيداع قيد المراجعة للمستخدم (إن وجد) */
+export function pendingDeposit(identifier: string): MoneyRequest | null {
+  return (
+    userRequests(identifier).find((r) => r.kind === "deposit" && r.status === "pending") ??
+    null
+  );
+}
+
+/** وقت انتهاء حظر الإيداع (timestamp) بعد رفض آخر طلب، أو null */
+export function depositBanUntil(identifier: string): number | null {
+  const lastRejected = userRequests(identifier)
+    .filter((r) => r.kind === "deposit" && r.status === "rejected" && r.decidedAt)
+    .sort((a, b) => (b.decidedAt ?? "").localeCompare(a.decidedAt ?? ""))[0];
+  if (!lastRejected?.decidedAt) return null;
+  const until = new Date(lastRejected.decidedAt).getTime() + DEPOSIT_BAN_MS;
+  return until > Date.now() ? until : null;
 }
 
 export function userRequests(identifier: string): MoneyRequest[] {

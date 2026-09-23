@@ -2,7 +2,14 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { clearStoredUser, getStoredUser, type StoredUser } from "@/lib/auth";
 import { fmt } from "@/lib/market";
-import { addRequest, getBalance, userRequests, type MoneyRequest } from "@/lib/store";
+import {
+  addRequest,
+  depositBanUntil,
+  getBalance,
+  pendingDeposit,
+  userRequests,
+  type MoneyRequest,
+} from "@/lib/store";
 
 const NUMBERS = ["01201838463", "01208895415"];
 
@@ -61,6 +68,8 @@ function DepositPage() {
   const [proof, setProof] = useState<{ dataUrl: string; name: string } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<"form" | "pending" | "banned">("form");
+  const [banLeft, setBanLeft] = useState(0);
 
   useEffect(() => {
     const u = getStoredUser();
@@ -75,7 +84,31 @@ function DepositPage() {
     setUser(u);
     setBalance(getBalance(u.identifier));
     setReqs(userRequests(u.identifier));
+    if (pendingDeposit(u.identifier)) {
+      setView("pending");
+      return;
+    }
+    const until = depositBanUntil(u.identifier);
+    if (until) {
+      setBanLeft(until - Date.now());
+      setView("banned");
+    }
   }, [navigate]);
+
+  useEffect(() => {
+    if (view !== "banned") return;
+    const t = window.setInterval(() => {
+      setBanLeft((left) => {
+        if (left <= 1000) {
+          window.clearInterval(t);
+          setView("form");
+          return 0;
+        }
+        return left - 1000;
+      });
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [view]);
 
   if (!user) return null;
   const activeUser = user;
@@ -111,6 +144,16 @@ function DepositPage() {
     if (!value || value <= 0) return setError("اكتب المبلغ الذي حوّلته.");
     if (value > 1_000_000) return setError("المبلغ أكبر من الحد المسموح.");
     if (!proof) return setError("أرفق صورة إثبات التحويل أولاً.");
+    if (pendingDeposit(activeUser.identifier)) {
+      setView("pending");
+      return;
+    }
+    const until = depositBanUntil(activeUser.identifier);
+    if (until) {
+      setBanLeft(until - Date.now());
+      setView("banned");
+      return;
+    }
     addRequest({
       identifier: activeUser.identifier,
       name: activeUser.name,
@@ -119,7 +162,8 @@ function DepositPage() {
       proof: proof.dataUrl,
       proofName: proof.name,
     });
-    navigate({ to: "/market", replace: true });
+    setReqs(userRequests(activeUser.identifier));
+    setView("pending");
   }
 
   return (
@@ -160,6 +204,50 @@ function DepositPage() {
           </p>
         </div>
 
+        {view === "pending" && (
+          <div className="rounded-2xl border border-primary/40 bg-primary/10 px-5 py-8 text-center">
+            <p className="text-2xl">⏳</p>
+            <p className="mt-2 text-lg font-bold text-primary">
+              طلب الإيداع الخاص بك تحت المراجعة
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              لا يمكنك إرسال طلب إيداع جديد حتى تتم مراجعة طلبك الحالي من الإدارة.
+              سيُضاف الرصيد إلى حسابك فور الموافقة.
+            </p>
+            <button
+              onClick={() => navigate({ to: "/market", replace: true })}
+              className="mt-5 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition hover:opacity-90"
+            >
+              العودة إلى السوق
+            </button>
+          </div>
+        )}
+
+        {view === "banned" && (
+          <div className="rounded-2xl border border-destructive/40 bg-destructive/10 px-5 py-8 text-center">
+            <svg viewBox="0 0 24 24" className="mx-auto h-8 w-8 text-destructive" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M5.5 5.5l13 13" strokeLinecap="round" />
+            </svg>
+            <p className="mt-2 text-lg font-bold text-destructive">تم رفض طلبك السابق</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              لا يمكنك إرسال طلب إيداع جديد قبل انتهاء المهلة.
+            </p>
+            <p className="mt-3 text-xl font-bold tabular-nums text-destructive" dir="ltr">
+              {String(Math.floor(banLeft / 60000)).padStart(2, "0")}:
+              {String(Math.floor((banLeft % 60000) / 1000)).padStart(2, "0")}
+            </p>
+            <button
+              onClick={() => navigate({ to: "/market", replace: true })}
+              className="mt-5 rounded-xl border border-border px-6 py-3 text-sm font-bold"
+            >
+              العودة إلى السوق
+            </button>
+          </div>
+        )}
+
+        {view === "form" && (
+          <>
         <h2 className="mt-6 text-lg font-bold">أرقام أورنج كاش للتحويل</h2>
         <section className="mt-3 space-y-2">
           {NUMBERS.map((num, i) => (
@@ -257,18 +345,14 @@ function DepositPage() {
           ))}
         </div>
 
-        {reqs.some((r) => r.kind === "deposit" && r.status === "pending") && (
-          <p className="mt-5 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm text-primary">
-            لديك طلب إيداع سابق قيد المراجعة، سيتم إضافة الرصيد بعد موافقة الإدارة.
-          </p>
-        )}
-
         <button
           onClick={submit}
           className="mt-6 w-full rounded-2xl bg-primary py-4 text-lg font-bold text-primary-foreground transition hover:opacity-90"
         >
           تأكيد طلب الإيداع
         </button>
+          </>
+        )}
       </div>
     </main>
   );
