@@ -19,6 +19,8 @@ export type MoneyRequest = {
   amount: number;
   status: "pending" | "approved" | "rejected";
   at: string;
+  proof?: string;
+  proofName?: string;
 };
 
 const ACCOUNTS_KEY = "em_accounts";
@@ -91,6 +93,8 @@ export function addRequest(input: {
   name: string;
   kind: "deposit" | "withdraw";
   amount: number;
+  proof?: string;
+  proofName?: string;
 }): MoneyRequest {
   const req: MoneyRequest = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -101,6 +105,10 @@ export function addRequest(input: {
     status: "pending",
     at: new Date().toISOString(),
   };
+  if (input.proof !== undefined) {
+    req.proof = input.proof;
+    if (input.proofName !== undefined) req.proofName = input.proofName;
+  }
   write(REQUESTS_KEY, [req, ...getRequests()]);
   return req;
 }
