@@ -78,6 +78,7 @@ function DepositPage() {
   }, [navigate]);
 
   if (!user) return null;
+  const activeUser = user;
 
   async function copyNumber(num: string) {
     try {
