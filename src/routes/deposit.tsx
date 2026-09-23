@@ -112,8 +112,8 @@ function DepositPage() {
     if (value > 1_000_000) return setError("المبلغ أكبر من الحد المسموح.");
     if (!proof) return setError("أرفق صورة إثبات التحويل أولاً.");
     addRequest({
-      identifier: user.identifier,
-      name: user.name,
+      identifier: activeUser.identifier,
+      name: activeUser.name,
       kind: "deposit",
       amount: value,
       proof: proof.dataUrl,
