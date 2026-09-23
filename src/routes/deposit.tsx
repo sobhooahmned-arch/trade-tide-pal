@@ -204,6 +204,47 @@ function DepositPage() {
           </p>
         </div>
 
+        {view === "pending" && (
+          <div className="rounded-2xl border border-primary/40 bg-primary/10 px-5 py-8 text-center">
+            <p className="text-2xl">⏳</p>
+            <p className="mt-2 text-lg font-bold text-primary">
+              طلب الإيداع الخاص بك تحت المراجعة
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              لا يمكنك إرسال طلب إيداع جديد حتى تتم مراجعة طلبك الحالي من الإدارة.
+              سيُضاف الرصيد إلى حسابك فور الموافقة.
+            </p>
+            <button
+              onClick={() => navigate({ to: "/market", replace: true })}
+              className="mt-5 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition hover:opacity-90"
+            >
+              العودة إلى السوق
+            </button>
+          </div>
+        )}
+
+        {view === "banned" && (
+          <div className="rounded-2xl border border-destructive/40 bg-destructive/10 px-5 py-8 text-center">
+            <p className="text-2xl">🚫</p>
+            <p className="mt-2 text-lg font-bold text-destructive">تم رفض طلبك السابق</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              لا يمكنك إرسال طلب إيداع جديد قبل انتهاء المهلة.
+            </p>
+            <p className="mt-3 text-xl font-bold tabular-nums text-destructive" dir="ltr">
+              {String(Math.floor(banLeft / 60000)).padStart(2, "0")}:
+              {String(Math.floor((banLeft % 60000) / 1000)).padStart(2, "0")}
+            </p>
+            <button
+              onClick={() => navigate({ to: "/market", replace: true })}
+              className="mt-5 rounded-xl border border-border px-6 py-3 text-sm font-bold"
+            >
+              العودة إلى السوق
+            </button>
+          </div>
+        )}
+
+        {view === "form" && (
+          <>
         <h2 className="mt-6 text-lg font-bold">أرقام أورنج كاش للتحويل</h2>
         <section className="mt-3 space-y-2">
           {NUMBERS.map((num, i) => (
