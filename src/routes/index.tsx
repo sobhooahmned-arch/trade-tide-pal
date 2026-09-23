@@ -302,6 +302,12 @@ function LoginPanel({ onDone }: { onDone: (user: StoredUser) => void }) {
         className="mt-1 w-full rounded-xl border border-input bg-background/60 px-3 py-3 text-sm outline-none focus:border-primary"
       />
 
+      {info && (
+        <p className="mt-3 rounded-lg bg-primary/15 px-3 py-2 text-sm text-primary">
+          {info}
+        </p>
+      )}
+
       {error && (
         <p className="mt-3 rounded-lg bg-destructive/15 px-3 py-2 text-sm text-destructive">
           {error}
@@ -313,7 +319,13 @@ function LoginPanel({ onDone }: { onDone: (user: StoredUser) => void }) {
         disabled={busy}
         className="mt-5 w-full rounded-xl bg-primary py-3 font-bold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
       >
-        {busy ? "جارٍ الدخول…" : "دخول"}
+        {busy
+          ? mode === "signup"
+            ? "جارٍ إنشاء الحساب…"
+            : "جارٍ الدخول…"
+          : mode === "signup"
+            ? "إنشاء الحساب"
+            : "دخول"}
       </button>
     </form>
   );
