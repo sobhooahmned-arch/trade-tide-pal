@@ -30,7 +30,7 @@ function MarketPage() {
   const [stocks, setStocks] = useState<Stock[]>(() => createStocks());
   const [balance, setBalance] = useState(0);
   const [reqs, setReqs] = useState<MoneyRequest[]>([]);
-  const [modal, setModal] = useState<"deposit" | "withdraw" | null>(null);
+  const [modal, setModal] = useState<"withdraw" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,15 +71,11 @@ function MarketPage() {
 
   if (!user) return null;
 
-  function apply(kind: "deposit" | "withdraw", amount: number) {
-    addRequest({ identifier: user!.identifier, name: user!.name, kind, amount });
+  function applyWithdraw(amount: number) {
+    addRequest({ identifier: user!.identifier, name: user!.name, kind: "withdraw", amount });
     setReqs(userRequests(user!.identifier));
     setModal(null);
-    setNotice(
-      kind === "deposit"
-        ? "تم إرسال طلب الإيداع، سيتم إضافة المبلغ لرصيدك بعد مراجعة الإدارة."
-        : "تم إرسال طلب السحب، سيتم تنفيذه بعد مراجعة الإدارة.",
-    );
+    setNotice("تم إرسال طلب السحب، سيتم تنفيذه بعد مراجعة الإدارة.");
     window.setTimeout(() => setNotice(null), 5000);
   }
 
@@ -110,7 +106,7 @@ function MarketPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={() => setModal("deposit")}
+              onClick={() => navigate({ to: "/deposit" })}
               className="rounded-2xl bg-primary px-4 py-3 text-right font-bold text-primary-foreground transition hover:opacity-90"
             >
               <span className="block text-xs font-medium opacity-80">إيداع</span>
@@ -183,14 +179,10 @@ function MarketPage() {
 
       {modal && (
         <MoneyModal
-          kind={modal}
-          max={modal === "withdraw" ? balance : undefined}
+          kind="withdraw"
+          max={balance}
           onClose={() => setModal(null)}
-          onConfirm={(amount) =>
-            modal === "deposit"
-              ? navigate({ to: "/deposit", replace: true })
-              : apply("withdraw", amount)
-          }
+          onConfirm={applyWithdraw}
         />
       )}
     </main>
