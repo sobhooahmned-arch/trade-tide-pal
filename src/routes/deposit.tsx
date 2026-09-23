@@ -225,7 +225,10 @@ function DepositPage() {
 
         {view === "banned" && (
           <div className="rounded-2xl border border-destructive/40 bg-destructive/10 px-5 py-8 text-center">
-            <p className="text-2xl">🚫</p>
+            <svg viewBox="0 0 24 24" className="mx-auto h-8 w-8 text-destructive" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M5.5 5.5l13 13" strokeLinecap="round" />
+            </svg>
             <p className="mt-2 text-lg font-bold text-destructive">تم رفض طلبك السابق</p>
             <p className="mt-2 text-sm text-muted-foreground">
               لا يمكنك إرسال طلب إيداع جديد قبل انتهاء المهلة.
