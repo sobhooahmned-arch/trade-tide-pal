@@ -342,18 +342,14 @@ function DepositPage() {
           ))}
         </div>
 
-        {reqs.some((r) => r.kind === "deposit" && r.status === "pending") && (
-          <p className="mt-5 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm text-primary">
-            لديك طلب إيداع سابق قيد المراجعة، سيتم إضافة الرصيد بعد موافقة الإدارة.
-          </p>
-        )}
-
         <button
           onClick={submit}
           className="mt-6 w-full rounded-2xl bg-primary py-4 text-lg font-bold text-primary-foreground transition hover:opacity-90"
         >
           تأكيد طلب الإيداع
         </button>
+          </>
+        )}
       </div>
     </main>
   );
