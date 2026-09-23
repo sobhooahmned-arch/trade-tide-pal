@@ -2,7 +2,14 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { clearStoredUser, getStoredUser, type StoredUser } from "@/lib/auth";
 import { fmt } from "@/lib/market";
-import { addRequest, getBalance, userRequests, type MoneyRequest } from "@/lib/store";
+import {
+  addRequest,
+  depositBanUntil,
+  getBalance,
+  pendingDeposit,
+  userRequests,
+  type MoneyRequest,
+} from "@/lib/store";
 
 const NUMBERS = ["01201838463", "01208895415"];
 
@@ -61,6 +68,8 @@ function DepositPage() {
   const [proof, setProof] = useState<{ dataUrl: string; name: string } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<"form" | "pending" | "banned">("form");
+  const [banLeft, setBanLeft] = useState(0);
 
   useEffect(() => {
     const u = getStoredUser();
@@ -75,7 +84,31 @@ function DepositPage() {
     setUser(u);
     setBalance(getBalance(u.identifier));
     setReqs(userRequests(u.identifier));
+    if (pendingDeposit(u.identifier)) {
+      setView("pending");
+      return;
+    }
+    const until = depositBanUntil(u.identifier);
+    if (until) {
+      setBanLeft(until - Date.now());
+      setView("banned");
+    }
   }, [navigate]);
+
+  useEffect(() => {
+    if (view !== "banned") return;
+    const t = window.setInterval(() => {
+      setBanLeft((left) => {
+        if (left <= 1000) {
+          window.clearInterval(t);
+          setView("form");
+          return 0;
+        }
+        return left - 1000;
+      });
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [view]);
 
   if (!user) return null;
   const activeUser = user;
@@ -111,6 +144,16 @@ function DepositPage() {
     if (!value || value <= 0) return setError("اكتب المبلغ الذي حوّلته.");
     if (value > 1_000_000) return setError("المبلغ أكبر من الحد المسموح.");
     if (!proof) return setError("أرفق صورة إثبات التحويل أولاً.");
+    if (pendingDeposit(activeUser.identifier)) {
+      setView("pending");
+      return;
+    }
+    const until = depositBanUntil(activeUser.identifier);
+    if (until) {
+      setBanLeft(until - Date.now());
+      setView("banned");
+      return;
+    }
     addRequest({
       identifier: activeUser.identifier,
       name: activeUser.name,
@@ -119,7 +162,8 @@ function DepositPage() {
       proof: proof.dataUrl,
       proofName: proof.name,
     });
-    navigate({ to: "/market", replace: true });
+    setReqs(userRequests(activeUser.identifier));
+    setView("pending");
   }
 
   return (
