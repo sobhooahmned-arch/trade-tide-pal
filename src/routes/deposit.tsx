@@ -86,7 +86,7 @@ function DepositPage() {
       window.setTimeout(() => setCopied(null), 2000);
     } catch {
       setError("لم يتم النسخ، انسخ الرقم يدوياً.");
-ecr      window.setTimeout(() => setError(null), 3000);
+      window.setTimeout(() => setError(null), 3000);
     }
   }
 
