@@ -104,6 +104,8 @@ export function addRequest(input: {
     amount: input.amount,
     status: "pending",
     at: new Date().toISOString(),
+    proof: input.proof,
+    proofName: input.proofName,
   };
   write(REQUESTS_KEY, [req, ...getRequests()]);
   return req;

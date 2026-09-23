@@ -186,7 +186,11 @@ function MarketPage() {
           kind={modal}
           max={modal === "withdraw" ? balance : undefined}
           onClose={() => setModal(null)}
-          onConfirm={(amount) => apply(modal, amount)}
+          onConfirm={(amount) =>
+            modal === "deposit"
+              ? navigate({ to: "/deposit", replace: true })
+              : apply("withdraw", amount)
+          }
         />
       )}
     </main>
